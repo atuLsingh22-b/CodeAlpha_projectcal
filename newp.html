@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Basic Calculator</title>
+  <style>
+    :root{
+      --bg: #0f172a;          /* slate-900 */
+      --panel: #111827;       /* gray-900 */
+      --panel-2: #1f2937;     /* gray-800 */
+      --text: #e5e7eb;        /* gray-200 */
+      --muted: #9ca3af;       /* gray-400 */
+      --accent: #22c55e;      /* green-500 */
+      --accent-2: #3b82f6;    /* blue-500 */
+      --danger: #ef4444;      /* red-500 */
+      --shadow: rgba(0,0,0,0.35);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 50% -10%, #111827 0%, #0b1222 35%, #050914 100%);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .calculator {
+      width: min(420px, 92vw);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 60px var(--shadow);
+      overflow: hidden;
+    }
+
+    .display {
+      padding: 18px 18px 8px 18px;
+      background: var(--panel);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .expression {
+      width: 100%;
+      padding: 14px 12px;
+      font-size: 28px;
+      line-height: 1.2;
+      color: var(--text);
+      background: var(--panel-2);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      outline: none;
+      caret-color: var(--accent-2);
+    }
+    .expression::placeholder{ color: #6b7280; }
+
+    .result {
+      height: 28px;
+      margin-top: 8px;
+      font-size: 14px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 14px;
+      background: var(--panel-2);
+    }
+
+    button.key {
+      border: none;
+      font-size: 20px;
+      padding: 16px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25) inset, 0 2px 0 rgba(255,255,255,0.04);
+      transition: transform 0.06s ease, filter 0.2s ease, background 0.2s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    button.key:hover { filter: brightness(1.08); }
+    button.key:active { transform: translateY(1px) scale(0.995); }
+
+    button.op { background: rgba(59,130,246,0.18); }
+    button.eq { background: rgba(34,197,94,0.28); font-weight: 700; }
+    button.danger { background: rgba(239,68,68,0.22); }
+
+    button.key:focus-visible{
+      outline: 2px solid var(--accent-2);
+      outline-offset: 2px;
+    }
+
+    .span-2 { grid-column: span 2; }
+
+    .footer {
+      padding: 10px 16px 16px;
+      font-size: 12px;
+      color: #94a3b8;
+      background: var(--panel-2);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kbd { 
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: #0b1222;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-bottom-width: 3px;
+      padding: 1px 6px;
+      border-radius: 6px;
+      margin: 0 2px;
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator" role="application" aria-label="Basic calculator">
+    <div class="display">
+      <input id="expr" class="expression" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="Type or use the keypad…" aria-label="Expression" />
+      <div class="result" aria-live="polite">
+        <span id="status">Ready</span>
+        <strong id="preview"></strong>
+      </div>
+    </div>
+
+    <div class="keys" aria-label="Calculator keypad">
+      <button class="key danger" data-action="clear" aria-label="Clear (Esc)">C</button>
+      <button class="key danger" data-action="backspace" aria-label="Backspace (⌫)">⌫</button>
+      <button class="key op" data-val="(" aria-label="Left parenthesis">(</button>
+      <button class="key op" data-val=")" aria-label="Right parenthesis">)</button>
+
+      <button class="key" data-val="7">7</button>
+      <button class="key" data-val="8">8</button>
+      <button class="key" data-val="9">9</button>
+      <button class="key op" data-val="÷" aria-label="Divide">÷</button>
+
+      <button class="key" data-val="4">4</button>
+      <button class="key" data-val="5">5</button>
+      <button class="key" data-val="6">6</button>
+      <button class="key op" data-val="×" aria-label="Multiply">×</button>
+
+      <button class="key" data-val="1">1</button>
+      <button class="key" data-val="2">2</button>
+      <button class="key" data-val="3">3</button>
+      <button class="key op" data-val="-" aria-label="Subtract">−</button>
+
+      <button class="key" data-val="0">0</button>
+      <button class="key" data-val=".">.</button>
+      <button class="key op" data-val="+" aria-label="Add">+</button>
+      <button class="key eq" data-action="equals" aria-label="Equals (Enter)">=</button>
+
+      <button class="key span-2" data-val="%" aria-label="Percent">%</button>
+      <button class="key span-2" data-action="ans" aria-label="Use last answer">ANS</button>
+    </div>
+
+    <div class="footer">
+      <div>Keyboard: <span class="kbd">0–9</span> <span class="kbd">+ − × ÷ * /</span> <span class="kbd">( )</span> <span class="kbd">.</span> <span class="kbd">Enter</span> <span class="kbd">Esc</span> <span class="kbd">Backspace</span></div>
+      <div id="lastAns" title="Last evaluated answer">ANS: –</div>
+    </div>
+  </main>
+
+  <script>
+    (function(){
+      const exprEl = document.getElementById('expr');
+      const previewEl = document.getElementById('preview');
+      const statusEl = document.getElementById('status');
+      const lastAnsEl = document.getElementById('lastAns');
+      const keypad = document.querySelector('.keys');
+
+      let lastAnswer = null;
+
+      // Focus input on load for immediate typing
+      window.addEventListener('load', () => exprEl.focus());
+
+      // Sanitize input to only allow safe math characters
+      function sanitize(raw){
+        if(!raw) return '';
+        // Normalize common unicode operator variants
+        raw = raw.replace(/[xX×]/g,'*').replace(/[÷]/g,'/').replace(/[−]/g,'-');
+        // Allow only digits, + - * / % . ( ) whitespace
+        const allowed = /[0-9+\-*/%().\s]/g;
+        const cleaned = (raw.match(allowed) || []).join('');
+        // Collapse duplicate operators like "++", "**" where sensible
+        return cleaned.replace(/\s+/g,'');
+      }
+
+      function calculate(expression){
+        const safe = sanitize(expression);
+        if(safe.trim() === '') return null;
+        // Guard against malformed endings like "+", "("
+        if(/[+\-*/%]$/.test(safe)) return null;
+        try{
+          // Evaluate using Function constructor in strict mode
+          const result = Function('"use strict"; return (' + safe + ')')();
+          // Handle non-finite results
+          if(typeof result !== 'number' || !isFinite(result)) return 'Error';
+          // Round tiny floating noise
+          return Math.round((result + Number.EPSILON) * 1e12) / 1e12;
+        }catch(e){
+          return null; // not yet valid to preview
+        }
+      }
+
+      function updatePreview(){
+        const val = exprEl.value;
+        const res = calculate(val);
+        if(res === null){
+          statusEl.textContent = 'Ready';
+          previewEl.textContent = '';
+        } else if(res === 'Error'){
+          statusEl.textContent = 'Error';
+          previewEl.textContent = '';
+        } else {
+          statusEl.textContent = '≈';
+          previewEl.textContent = String(res);
+        }
+      }
+
+      function insert(val){
+        // Append to end; keep cursor at end
+        const start = exprEl.selectionStart;
+        const end = exprEl.selectionEnd;
+        const before = exprEl.value.slice(0, start);
+        const after = exprEl.value.slice(end);
+        exprEl.value = before + val + after;
+        const newPos = start + val.length;
+        exprEl.setSelectionRange(newPos, newPos);
+        exprEl.focus();
+        updatePreview();
+      }
+
+      function backspace(){
+        const start = exprEl.selectionStart;
+        const end = exprEl.selectionEnd;
+        if(start !== end){
+          // Delete selection
+          exprEl.value = exprEl.value.slice(0, start) + exprEl.value.slice(end);
+          exprEl.setSelectionRange(start, start);
+        } else if(start > 0){
+          // Delete single char before cursor
+          exprEl.value = exprEl.value.slice(0, start-1) + exprEl.value.slice(start);
+          exprEl.setSelectionRange(start-1, start-1);
+        }
+        exprEl.focus();
+        updatePreview();
+      }
+
+      function clearAll(){
+        exprEl.value = '';
+        previewEl.textContent = '';
+        statusEl.textContent = 'Ready';
+        exprEl.focus();
+      }
+
+      function equals(){
+        const res = calculate(exprEl.value);
+        if(res === null || res === 'Error'){
+          statusEl.textContent = 'Error';
+          previewEl.textContent = '';
+          return;
+        }
+        exprEl.value = String(res);
+        lastAnswer = res;
+        lastAnsEl.textContent = 'ANS: ' + res;
+        statusEl.textContent = 'Result';
+        previewEl.textContent = '';
+        exprEl.focus();
+        // Move caret to end
+        const p = exprEl.value.length;
+        exprEl.setSelectionRange(p, p);
+      }
+
+      // Keypad mouse/touch
+      keypad.addEventListener('click', (e) => {
+        const btn = e.target.closest('button.key');
+        if(!btn) return;
+        const action = btn.dataset.action;
+        const val = btn.dataset.val;
+        if(action === 'clear') return void clearAll();
+        if(action === 'backspace') return void backspace();
+        if(action === 'equals') return void equals();
+        if(action === 'ans'){
+          if(lastAnswer !== null) insert(String(lastAnswer));
+          return;
+        }
+        if(val) insert(val);
+      });
+
+      // Input update (typing)
+      exprEl.addEventListener('input', () => {
+        // Live sanitize softly: keep cursor where user typed.
+        const before = exprEl.value;
+        const clean = sanitize(before);
+        if(before !== clean){
+          const pos = exprEl.selectionStart;
+          exprEl.value = clean;
+          exprEl.setSelectionRange(Math.min(pos, clean.length), Math.min(pos, clean.length));
+        }
+        updatePreview();
+      });
+
+      // Keyboard shortcuts
+      exprEl.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter'){
+          e.preventDefault();
+          return equals();
+        }
+        if(e.key === 'Escape'){
+          e.preventDefault();
+          return clearAll();
+        }
+        // Map x to * for convenience
+        if(e.key.toLowerCase() === 'x'){
+          e.preventDefault();
+          return insert('*');
+        }
+      });
+
+      // Initialize preview once
+      updatePreview();
+    })();
+  </script>
+</body>
+</html>
